@@ -26,8 +26,9 @@ export default class ExampleExtension extends Extension {
     enable() {
         this._encoder = new TextEncoder();
         this._injectionManager = new InjectionManager();
-        this._preeditVisible = false;
         this._inputContext = null;
+        this._preeditVisible = false;
+        this._anchor = 0;
 
         this._injectionManager.overrideMethod(
             InputMethod.prototype,
@@ -64,6 +65,8 @@ export default class ExampleExtension extends Extension {
         if (this._inputContext === Main.inputMethod._context)
             return;
         this._inputContext = Main.inputMethod._context;
+        const im = Main.inputMethod;
+
         this._updatePreeditTextWithModeID = this._inputContext.connect(
             'update-preedit-text-with-mode',
             (_con, text, pos, visible, mode) => {
@@ -74,22 +77,31 @@ export default class ExampleExtension extends Extension {
 
                 for (let i = 0; (attr = attrs.get(i)); ++i) {
                     if (attr.get_attr_type() === IBus.AttrType.BACKGROUND &&
-                        attr.get_start_index === pos) {
+                        attr.get_start_index() === pos) {
                         end = attr.get_end_index();
                         break;
                     }
                 }
 
                 // mutter bug https://gitlab.gnome.org/GNOME/mutter/-/issues/3547
-                let endb = this._encoder.encode(s.slice(0, end)).length;
+                this._anchor = this._encoder.encode(s.slice(0, end)).length;
 
                 if (visible)
-                    Main.inputMethod.set_preedit_text(s, pos, endb, mode, true);
+                    im.set_preedit_text(s, pos, this._anchor, mode, true);
                 else if (this._preeditVisible)
-                    Main.inputMethod.set_preedit_text(null, pos, endb, mode, true);
+                    im.set_preedit_text(null, pos, this._anchor, mode, true);
 
                 this._preeditVisible = visible;
             }
         );
+
+        this._inputContext.connect('show-preedit-text', () => {
+            im.set_preedit_text(
+                im._preeditStr, im._preeditPos, this._anchor, im._preeditCommitMode, true);
+        });
+        this._inputContext.connect('hide-preedit-text', () => {
+            im.set_preedit_text(
+                null, im._preeditPos, this._anchor, im._preeditCommitMode, true);
+        });
     }
 }
