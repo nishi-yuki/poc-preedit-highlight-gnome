@@ -73,11 +73,9 @@ export default class ExampleExtension extends Extension {
                 let end = pos;
 
                 for (let i = 0; (attr = attrs.get(i)); ++i) {
-                    if (attr.get_attr_type() === IBus.AttrType.BACKGROUND) {
-                        let start = attr.get_start_index();
+                    if (attr.get_attr_type() === IBus.AttrType.BACKGROUND &&
+                        attr.get_start_index === pos) {
                         end = attr.get_end_index();
-                        if (pos !== start)
-                            console.log('Fake Highlight!!!!!');
                         break;
                     }
                 }
