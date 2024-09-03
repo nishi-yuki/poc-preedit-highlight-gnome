@@ -30,18 +30,15 @@ export default class ExampleExtension extends Extension {
         this._preeditVisible = false;
         this._anchor = 0;
 
+        this._originalSetPreeditText = InputMethod.prototype['set_preedit_text'].bind(Main.inputMethod);
+
         this._injectionManager.overrideMethod(
             InputMethod.prototype,
             'set_preedit_text',
             originalMethod => {
-                return function (preedit, cursor, anchor, mode, callOriginal) {
+                return function (preedit, cursor, anchor, mode) {
                     if (preedit === null && cursor === 0 && anchor === 0)  // on focus out
                         originalMethod.call(this, null, 0, 0, mode);
-
-                    if (callOriginal === true) {
-                        console.log('[INPUT]', preedit, cursor, anchor);
-                        originalMethod.call(this, preedit, cursor, anchor, mode);
-                    }
                 };
             }
         );
@@ -87,21 +84,22 @@ export default class ExampleExtension extends Extension {
                 this._anchor = this._encoder.encode(s.slice(0, end)).length;
 
                 if (visible)
-                    im.set_preedit_text(s, pos, this._anchor, mode, true);
+                    this._originalSetPreeditText(s, pos, this._anchor, mode);
                 else if (this._preeditVisible)
-                    im.set_preedit_text(null, pos, this._anchor, mode, true);
+                    this._originalSetPreeditText(null, pos, this._anchor, mode);
 
                 this._preeditVisible = visible;
             }
         );
 
         this._inputContext.connect('show-preedit-text', () => {
-            im.set_preedit_text(
-                im._preeditStr, im._preeditPos, this._anchor, im._preeditCommitMode, true);
+            this._originalSetPreeditText(
+                im._preeditStr, im._preeditPos, this._anchor, im._preeditCommitMode);
         });
+
         this._inputContext.connect('hide-preedit-text', () => {
-            im.set_preedit_text(
-                null, im._preeditPos, this._anchor, im._preeditCommitMode, true);
+            this._originalSetPreeditText(
+                null, im._preeditPos, this._anchor, im._preeditCommitMode);
         });
     }
 }
