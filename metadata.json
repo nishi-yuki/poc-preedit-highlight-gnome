@@ -1,0 +1,8 @@
+{
+  "name": "PreeditHighlight",
+  "description": "Enable preedit highlight",
+  "uuid": "preedit-highlight@nishi-yuki.github.com",
+  "shell-version": [
+    "46"
+  ]
+}
