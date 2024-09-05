@@ -21,6 +21,7 @@ import {Extension, InjectionManager} from 'resource:///org/gnome/shell/extension
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {InputMethod} from 'resource:///org/gnome/shell/misc/inputMethod.js';
+import * as Config from 'resource:///org/gnome/shell/misc/config.js';
 
 export default class ExampleExtension extends Extension {
     enable() {
@@ -29,6 +30,15 @@ export default class ExampleExtension extends Extension {
         this._inputContext = null;
         this._preeditVisible = false;
         this._anchor = 0;
+
+        // anchorの指定がbyte単位になるバグを回避する必要がある
+        // 参照: https://gitlab.gnome.org/GNOME/mutter/-/issues/3547
+        // このバグは 46.3 で修正された
+        // 参照: https://gitlab.gnome.org/GNOME/mutter/-/tags/46.3
+        this._anchorNeedsByteOffset = false;
+        const [major, minor] = Config.PACKAGE_VERSION.split('.');
+        if (parseInt(major) <= 46 && parseInt(minor) < 3)
+            this._anchorNeedsByteOffset = true;
 
         this._originalSetPreeditText = InputMethod.prototype['set_preedit_text'].bind(Main.inputMethod);
 
@@ -80,8 +90,10 @@ export default class ExampleExtension extends Extension {
                     }
                 }
 
-                // mutter bug https://gitlab.gnome.org/GNOME/mutter/-/issues/3547
-                this._anchor = this._encoder.encode(s.slice(0, end)).length;
+                if (this._anchorNeedsByteOffset)
+                    this._anchor = this._encoder.encode(s.slice(0, end)).length;
+                else
+                    this._anchor = end;
 
                 if (visible)
                     this._originalSetPreeditText(s, pos, this._anchor, mode);
