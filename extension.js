@@ -49,6 +49,9 @@ export default class ExampleExtension extends Extension {
                 return function (preedit, cursor, anchor, mode) {
                     if (preedit === null && cursor === 0 && anchor === 0)  // on focus out
                         originalMethod.call(this, null, 0, 0, mode);
+                    if (this === Main.inputMethod)
+                        return;
+                    originalMethod.call(this, preedit, cursor, anchor, mode);
                 };
             }
         );
