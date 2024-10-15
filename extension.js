@@ -69,6 +69,8 @@ export default class ExampleExtension extends Extension {
         this._injectionManager = null;
         global.display.disconnect(this._onFocusWindowID);
         this._inputContext?.disconnect(this._updatePreeditTextWithModeID);
+        this._inputContext?.disconnect(this._showPreeditTextID);
+        this._inputContext?.disconnect(this._hidePreeditTextID);
     }
 
     _onFocusWindow() {
@@ -110,12 +112,12 @@ export default class ExampleExtension extends Extension {
             }
         );
 
-        this._inputContext.connect('show-preedit-text', () => {
+        this._showPreeditTextID = this._inputContext.connect('show-preedit-text', () => {
             this._originalSetPreeditText(
                 im._preeditStr, im._preeditPos, this._anchor, im._preeditCommitMode);
         });
 
-        this._inputContext.connect('hide-preedit-text', () => {
+        this._hidePreeditTextID = this._inputContext.connect('hide-preedit-text', () => {
             this._originalSetPreeditText(
                 null, im._preeditPos, this._anchor, im._preeditCommitMode);
         });
