@@ -56,10 +56,10 @@ export default class ExampleExtension extends Extension {
             }
         );
 
-        this._onFocusWindow();
+        this._connectWithInputContext();
         this._onFocusWindowID = global.display.connect(
             'notify::focus-window',
-            this._onFocusWindow.bind(this)
+            this._connectWithInputContext.bind(this)
         );
     }
 
@@ -73,7 +73,7 @@ export default class ExampleExtension extends Extension {
         this._inputContext?.disconnect(this._hidePreeditTextID);
     }
 
-    _onFocusWindow() {
+    _connectWithInputContext() {
         if (this._inputContext === Main.inputMethod._context)
             return;
         this._inputContext = Main.inputMethod._context;
