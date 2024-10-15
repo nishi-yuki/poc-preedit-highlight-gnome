@@ -93,6 +93,9 @@ export default class ExampleExtension extends Extension {
                     }
                 }
 
+                if (end !== pos)
+                    s = `${s.slice(0, end)}|${s.slice(end)}`;
+
                 if (this._anchorNeedsByteOffset)
                     this._anchor = this._encoder.encode(s.slice(0, end)).length;
                 else
