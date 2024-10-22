@@ -46,7 +46,9 @@ export default class ExampleExtension extends Extension {
             InputMethod.prototype,
             'set_preedit_text',
             originalMethod => {
+                const connect = this._connectWithInputContext.bind(this);
                 return function (preedit, cursor, anchor, mode) {
+                    connect();
                     if (preedit === null && cursor === 0 && anchor === 0)  // on focus out
                         originalMethod.call(this, null, 0, 0, mode);
                     if (this === Main.inputMethod)
@@ -55,19 +57,12 @@ export default class ExampleExtension extends Extension {
                 };
             }
         );
-
-        this._connectWithInputContext();
-        this._onFocusWindowID = global.display.connect(
-            'notify::focus-window',
-            this._connectWithInputContext.bind(this)
-        );
     }
 
     disable() {
         this._encoder = null;
         this._injectionManager.clear();
         this._injectionManager = null;
-        global.display.disconnect(this._onFocusWindowID);
         this._inputContext?.disconnect(this._updatePreeditTextWithModeID);
         this._inputContext?.disconnect(this._showPreeditTextID);
         this._inputContext?.disconnect(this._hidePreeditTextID);
