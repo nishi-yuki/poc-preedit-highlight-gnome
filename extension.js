@@ -74,7 +74,7 @@ export default class ExampleExtension extends Extension {
     }
 
     _connectWithInputContext() {
-        if (this._inputContext === Main.inputMethod._context)
+        if (this._inputContext === Main.inputMethod._context || !Main.inputMethod._context)
             return;
         this._inputContext = Main.inputMethod._context;
         const im = Main.inputMethod;
