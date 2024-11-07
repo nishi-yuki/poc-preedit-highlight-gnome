@@ -123,15 +123,14 @@ export default class ExampleExtension extends Extension {
             preedit = `${preedit.slice(0, anchor)}|${preedit.slice(anchor)}`;
 
         if (this._anchorNeedsByteOffset)
-            this._preeditAnchor = this._encoder.encode(preedit.slice(0, anchor)).length;
-        else
-            this._preeditAnchor = anchor;
+            anchor = this._encoder.encode(preedit.slice(0, anchor)).length;
 
         if (visible)
-            this._originalSetPreeditText(preedit, pos, this._preeditAnchor, mode);
+            this._originalSetPreeditText(preedit, pos, anchor, mode);
         else if (this._preeditVisible)
-            this._originalSetPreeditText(null, pos, this._preeditAnchor, mode);
+            this._originalSetPreeditText(null, pos, anchor, mode);
 
+        this._preeditAnchor = anchor;
         this._preeditVisible = visible;
     }
 
