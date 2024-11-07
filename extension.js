@@ -29,7 +29,7 @@ export default class ExampleExtension extends Extension {
         this._injectionManager = new InjectionManager();
         this._inputContext = null;
         this._preeditVisible = false;
-        this._anchor = 0;
+        this._preeditAnchor = 0;
 
         // anchorの指定がbyte単位になるバグを回避する必要がある
         // 参照: https://gitlab.gnome.org/GNOME/mutter/-/issues/3547
@@ -90,31 +90,47 @@ export default class ExampleExtension extends Extension {
     }
 
     _onUpdatePreeditText(_context, text, pos, visible, mode) {
-        let s = text.get_text();
-        let attrs = text.get_attributes();
-        let attr;
-        let end = pos;
+        if (text == null)
+            return;
 
-        for (let i = 0; (attr = attrs.get(i)); ++i) {
-            if (attr.get_attr_type() === IBus.AttrType.BACKGROUND &&
-                attr.get_start_index() === pos) {
-                end = attr.get_end_index();
-                break;
+        let preedit = text.get_text();
+        if (preedit === '')
+            preedit = null;
+
+        let anchor = pos;
+
+        if (preedit) {
+            const attrs = text.get_attributes();
+            const ranges = [];
+            let attr;
+
+            for (let i = 0; (attr = attrs.get(i)); ++i) {
+                if (attr.get_attr_type() === IBus.AttrType.BACKGROUND)
+                    ranges.push([attr.get_start_index(), attr.get_end_index()]);
+            }
+            ranges.sort((a, b) => a[0] - b[0]);
+
+            if (ranges.length > 0 && ranges[0][0] === pos) {
+                ranges.forEach(x => {
+                    const [start, end] = x;
+                    if (start <= anchor)
+                        anchor = Math.max(anchor, end);
+                });
             }
         }
 
-        if (end !== pos)
-            s = `${s.slice(0, end)}|${s.slice(end)}`;
+        if (anchor !== pos)
+            preedit = `${preedit.slice(0, anchor)}|${preedit.slice(anchor)}`;
 
         if (this._anchorNeedsByteOffset)
-            this._anchor = this._encoder.encode(s.slice(0, end)).length;
+            this._preeditAnchor = this._encoder.encode(preedit.slice(0, anchor)).length;
         else
-            this._anchor = end;
+            this._preeditAnchor = anchor;
 
         if (visible)
-            this._originalSetPreeditText(s, pos, this._anchor, mode);
+            this._originalSetPreeditText(preedit, pos, this._preeditAnchor, mode);
         else if (this._preeditVisible)
-            this._originalSetPreeditText(null, pos, this._anchor, mode);
+            this._originalSetPreeditText(null, pos, this._preeditAnchor, mode);
 
         this._preeditVisible = visible;
     }
@@ -122,13 +138,13 @@ export default class ExampleExtension extends Extension {
     _onShowPreeditText() {
         this._preeditVisible = true;
         this._originalSetPreeditText(
-            Main.inputMethod._preeditStr, Main.inputMethod._preeditPos, this._anchor,
+            Main.inputMethod._preeditStr, Main.inputMethod._preeditPos, this._preeditAnchor,
             Main.inputMethod._preeditCommitMode);
     }
 
     _onHidePreeditText() {
         this._originalSetPreeditText(
-            null, Main.inputMethod._preeditPos, this._anchor,
+            null, Main.inputMethod._preeditPos, this._preeditAnchor,
             Main.inputMethod._preeditCommitMode);
         this._preeditVisible = false;
     }
