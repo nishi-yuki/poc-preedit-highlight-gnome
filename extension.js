@@ -72,49 +72,64 @@ export default class ExampleExtension extends Extension {
         if (this._inputContext === Main.inputMethod._context || !Main.inputMethod._context)
             return;
         this._inputContext = Main.inputMethod._context;
-        const im = Main.inputMethod;
 
         this._updatePreeditTextWithModeID = this._inputContext.connect(
             'update-preedit-text-with-mode',
-            (_con, text, pos, visible, mode) => {
-                let s = text.get_text();
-                let attrs = text.get_attributes();
-                let attr;
-                let end = pos;
-
-                for (let i = 0; (attr = attrs.get(i)); ++i) {
-                    if (attr.get_attr_type() === IBus.AttrType.BACKGROUND &&
-                        attr.get_start_index() === pos) {
-                        end = attr.get_end_index();
-                        break;
-                    }
-                }
-
-                if (end !== pos)
-                    s = `${s.slice(0, end)}|${s.slice(end)}`;
-
-                if (this._anchorNeedsByteOffset)
-                    this._anchor = this._encoder.encode(s.slice(0, end)).length;
-                else
-                    this._anchor = end;
-
-                if (visible)
-                    this._originalSetPreeditText(s, pos, this._anchor, mode);
-                else if (this._preeditVisible)
-                    this._originalSetPreeditText(null, pos, this._anchor, mode);
-
-                this._preeditVisible = visible;
-            }
+            this._onUpdatePreeditText.bind(this),
         );
 
-        this._showPreeditTextID = this._inputContext.connect('show-preedit-text', () => {
-            this._originalSetPreeditText(
-                im._preeditStr, im._preeditPos, this._anchor, im._preeditCommitMode);
-        });
+        this._showPreeditTextID = this._inputContext.connect(
+            'show-preedit-text',
+            this._onShowPreeditText.bind(this),
+        );
 
-        this._hidePreeditTextID = this._inputContext.connect('hide-preedit-text', () => {
-            this._originalSetPreeditText(
-                null, im._preeditPos, this._anchor, im._preeditCommitMode);
-        });
+        this._hidePreeditTextID = this._inputContext.connect(
+            'hide-preedit-text',
+            this._onHidePreeditText.bind(this),
+        );
+    }
+
+    _onUpdatePreeditText(_context, text, pos, visible, mode) {
+        let s = text.get_text();
+        let attrs = text.get_attributes();
+        let attr;
+        let end = pos;
+
+        for (let i = 0; (attr = attrs.get(i)); ++i) {
+            if (attr.get_attr_type() === IBus.AttrType.BACKGROUND &&
+                attr.get_start_index() === pos) {
+                end = attr.get_end_index();
+                break;
+            }
+        }
+
+        if (end !== pos)
+            s = `${s.slice(0, end)}|${s.slice(end)}`;
+
+        if (this._anchorNeedsByteOffset)
+            this._anchor = this._encoder.encode(s.slice(0, end)).length;
+        else
+            this._anchor = end;
+
+        if (visible)
+            this._originalSetPreeditText(s, pos, this._anchor, mode);
+        else if (this._preeditVisible)
+            this._originalSetPreeditText(null, pos, this._anchor, mode);
+
+        this._preeditVisible = visible;
+    }
+
+    _onShowPreeditText() {
+        this._preeditVisible = true;
+        this._originalSetPreeditText(
+            Main.inputMethod._preeditStr, Main.inputMethod._preeditPos, this._anchor,
+            Main.inputMethod._preeditCommitMode);
+    }
+
+    _onHidePreeditText() {
+        this._originalSetPreeditText(
+            null, Main.inputMethod._preeditPos, this._anchor,
+            Main.inputMethod._preeditCommitMode);
+        this._preeditVisible = false;
     }
 }
