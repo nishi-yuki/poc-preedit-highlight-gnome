@@ -119,9 +119,6 @@ export default class ExampleExtension extends Extension {
             }
         }
 
-        if (anchor !== pos)
-            preedit = `${preedit.slice(0, anchor)}|${preedit.slice(anchor)}`;
-
         if (this._anchorNeedsByteOffset)
             anchor = this._encoder.encode(preedit.slice(0, anchor)).length;
 
