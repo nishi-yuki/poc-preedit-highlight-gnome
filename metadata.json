@@ -1,8 +1,9 @@
 {
-  "name": "PreeditHighlight",
-  "description": "Enable preedit highlight",
+  "name": "Preedit Highlight For Japanese IME",
+  "description": "未確定文字列のハイライト表示機能を追加します。 This extension adds a feature to highlight preedit text.",
   "uuid": "preedit-highlight@nishi-yuki.github.com",
   "shell-version": [
-    "46"
-  ]
+    "45", "46", "47"
+  ],
+  "url": "https://github.com/nishi-yuki/gnome-shell-extension-preedit-highlight"
 }
