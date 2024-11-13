@@ -35,10 +35,8 @@ export default class ExampleExtension extends Extension {
         // 参照: https://gitlab.gnome.org/GNOME/mutter/-/issues/3547
         // このバグは 46.3 で修正された
         // 参照: https://gitlab.gnome.org/GNOME/mutter/-/tags/46.3
-        this._anchorNeedsByteOffset = false;
-        const [major, minor] = Config.PACKAGE_VERSION.split('.');
-        if (parseInt(major) <= 46 && parseInt(minor) < 3)
-            this._anchorNeedsByteOffset = true;
+        const [major, minor] = Config.PACKAGE_VERSION.split('.').map(x => parseInt(x));
+        this._anchorNeedsByteOffset = major <= 45 || major === 46 && minor < 3;
 
         this._originalSetPreeditText = InputMethod.prototype['set_preedit_text'].bind(Main.inputMethod);
 
@@ -119,7 +117,7 @@ export default class ExampleExtension extends Extension {
             }
         }
 
-        if (this._anchorNeedsByteOffset)
+        if (this._anchorNeedsByteOffset && preedit)
             anchor = this._encoder.encode(preedit.slice(0, anchor)).length;
 
         if (visible)
