@@ -23,7 +23,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {InputMethod} from 'resource:///org/gnome/shell/misc/inputMethod.js';
 import * as Config from 'resource:///org/gnome/shell/misc/config.js';
 
-export default class ExampleExtension extends Extension {
+export default class AddPreeditHighlightExtension extends Extension {
     enable() {
         this._encoder = new TextEncoder();
         this._injectionManager = new InjectionManager();
